@@ -1,0 +1,95 @@
+syntax = "proto3";
+
+package nameNode;
+
+message dataNode {
+  uint32 id = 1;
+  string ip = 2;
+  string port = 3;
+}
+
+// path表示要访问的文件路径，action用来表示对文件的操作
+// 2:创建 1:写 0:读 -1:删除
+message ClientFileRequest {
+  string path = 1;
+  int32 action = 2;
+}
+
+// state用来表示当前用户操作的结果状态，1为当前用户操作成功，0为失败
+// 用户成功读取的时候返回一个datanode的列表，用户根据这个列表去
+// 对key对应的文件执行相应的操作
+message ClientFileRespond {
+  uint32 state = 1;
+  repeated dataNode nodes = 2;
+  uint32 key = 3;
+}
+
+message ClientMkdirRequest {
+  string path = 1;
+}
+
+message ClientCdRequest {
+  string path = 1;
+}
+
+// 返回一个新的文件路径
+message ClientCdResponse {
+  string path = 1;
+}
+
+message ClientLsRequest {
+  string path = 1;
+}
+
+message ClientLsResponse {
+  repeated string objects = 1;
+}
+
+///////////////
+message ClientFinish {
+  int32 action = 1;
+  uint32 key = 2;
+}
+
+message FinishACK {
+  uint32 state = 1;
+}
+
+////////////////////////
+
+// 节点加入
+message NodeAppend {
+  string ip = 1;
+  string port = 2;
+  repeated uint32 keys = 3;
+  uint32 nid = 4;
+}
+
+// 节点离开
+message NodeLeave {
+  uint32 nid = 1;
+}
+
+// 节点完成操作 1:写 2:创建 -1:删除
+message NodeFinish {
+  int32 action = 1;
+  string path = 2;
+  uint32 key = 3;
+  uint32 nid = 4;
+}
+
+
+
+service nameNode {
+  // Client
+	rpc getDataNode(ClientFileRequest) returns (ClientFileRespond) {}
+  rpc wave(ClientFinish) returns (FinishACK) {}
+  rpc mkdir(ClientMkdirRequest) returns (FinishACK) {}
+  rpc ls(ClientLsRequest) returns (ClientLsResponse) {}
+  rpc cd(ClientCdRequest) returns (FinishACK) {}
+
+  // DataNode
+  rpc dataNodeAppend(NodeAppend) returns(FinishACK) {}
+  rpc dataNodeLeave(NodeLeave) returns(FinishACK) {}
+  rpc dataNodeFinish(NodeFinish) returns(FinishACK) {}
+}

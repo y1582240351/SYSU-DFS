@@ -1,0 +1,71 @@
+syntax = "proto3";
+
+package dataNode;
+
+message dataNodeInfo {
+  uint32 id = 1;
+  string ip = 2;
+  string port = 3;
+}
+
+//// 与namenode交互
+
+//// -1:删除, 1:写, 2:创建
+//message FileOperateRequest {
+//  uint32 key = 1;
+//  uint32 action = 2;
+//}
+//
+//message FileOperateRespond {
+//  uint32 state = 1;
+//}
+
+
+//// 与client交互
+
+message ClientRespond {
+  uint32 state = 1;
+}
+
+// 文件块
+message Chunk {
+  bytes buffer = 1;
+}
+
+// 读取文件
+message ClientReadRequest {
+  uint32 key = 1;
+}
+
+
+// 写文件
+message ClientWriteRequest {
+  uint32 key = 1;
+  bytes buffer = 2;
+//  repeated dataNodeInfo nodes = 3;
+}
+
+message ClientSyncRequest {
+  repeated dataNodeInfo nodes = 1;
+  uint32 key = 2;
+}
+
+message ClientCreateRequest {
+  uint32 key = 1;
+  string file_name = 2;
+  string path = 3;
+}
+
+
+// 删除文件
+message ClientDeleteRequest {
+  uint32 key = 1;
+}
+
+service dataNode {
+  rpc deleteFile(ClientDeleteRequest) returns (ClientRespond) {}
+  rpc read(ClientReadRequest) returns (stream Chunk) {}
+  rpc write(stream ClientWriteRequest) returns (ClientRespond) {}
+  rpc create(ClientCreateRequest) returns (ClientRespond) {}
+  rpc syncWrite(ClientSyncRequest) returns (ClientRespond) {}
+}
